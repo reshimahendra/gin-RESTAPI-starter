@@ -13,7 +13,7 @@ type Base struct {
 }
 
 // Base Model with UUID Primary Key 
-type Base struct {
+type BaseUUID struct {
     ID        uuid.UUID `gorm:"column:id;autoIncrement;primaryKey;" json:"id"`
     CreatedAt time.Time `gorm:"column:created_at;type:datetime;not null;" json:"created_at"`
     UpdatedAt time.Time `gorm:"column:updated_at;type:datetime;not null;" json:"updated_at"`
