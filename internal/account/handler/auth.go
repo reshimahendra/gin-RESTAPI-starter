@@ -6,7 +6,7 @@
    * RefreshToken
    * CheckToken
 */
-package auth
+package handler 
 
 import (
 	"encoding/json"
@@ -82,7 +82,7 @@ func (ctl *Controller) Signup(c *gin.Context) {
     }
 
     // convert 'dto User request' to 'model User'
-    responseUser := service.RequestToUser(u)
+    responseUser := model.RequestToUser(u)
 
     user, err := service.SaveUser(ctl.db, *responseUser)
     if err != nil {
