@@ -52,7 +52,7 @@ type UserRequest struct {
     Password  string        `json:"password" binding:"required"`
     Active    bool          `json:"active"`
     RoleID    uint          `json:"role_id"`
-    Role      *Role         `json:"role"`
+    Role      *RoleRequest  `json:"role"`
 }
 
 // UserResponse is 'DTO' (Data Transfer Object) for 'User' model 
@@ -66,7 +66,7 @@ type UserResponse struct {
     Password  string        `json:"password"`
     Active    bool          `json:"active"`
     RoleID    uint          `json:"role_id"`
-    Role      *Role         `json:"role"`
+    Role      *RoleResponse `json:"role"`
 }
 
 // Credential is 'DTO' (Data Transfer Object) for user response 
