@@ -1,7 +1,7 @@
 # Yet Another Golang RESTfull API
 
 ### A quick story about this starter-kit
-So, when I tried to write my first [golang][1] project, especially for `web api`, I realy don't know how to structure my project directory, file management, etc. Frequently I search for hours on [Github][9] or `googling` regarding the best practice on structuring our [Go][1] project, but the deeper I dive, the confused I get. Technically, most of the `Already Available` starter kit that I found is good, but sometimes it overkill. Some of them also great, but missing some part. Therefore I made my own so it will also aligned with code my writting style as well as minimalizing the 'confusion' I may get when depending on others starter-kit. This starter-kit may not for you as writting/ programming style is personal prefference and relative for every person, but feel free to use it.
+So, when I tried to write my first [Golang][1] project, especially for `web api`, I realy don't know how to structure my project directory, file managing the file, and so on. Frequently I search for hours on [Github][9] or `Googling` topics regarding the best practice on how to structuring [Golang][1] Webapp project, but the deeper I dive, the confuser I get. Technically, most of the `already available` Golang `RESTFULL API Starter Kit` that I found on the net is good, but sometimes it overkill. Some of them also great, but missing some part that I need. Therefore I made my own so it will also aligned with my coding `writting style` as well as minimalizing the 'confusion' I may get when depending on others starter-kit. This starter-kit may not for you as writting/ programming style is personal prefference and relative for every person, but feel free to use it.
 
 ## Table of Content
 1. [Quick Review](#1.-quick-review)
@@ -30,6 +30,7 @@ project-directory
 |-- |-- | server
 |-- |-- docker
 |-- config
+|-- dist
 |-- internal
 |-- |-- account
 |-- |-- |-- handler
