@@ -1,18 +1,10 @@
 /*
-    Package model for 'Role'
+   Package service for 'User Role'
+   It will implementing interface available on 'user.role repository'
+   to create bridge for the 'repository' package and 'handler' package
 */
-package model
-
-// User Role
-type Role struct {
-    ID          uint    `gorm:"primaryKey;autoIncrement" json:"id"`
-    Name        string  `gorm:"type:varchar(25);unique;" json:"name"`
-    Description string  `json:"description"`
-}
-
-func (r *Role) TableName() string {
-    return "Role"
-}
+    
+package service
 
 // RoleRequest is 'DTO' (Data Transfer Object) for 'Role' model
 // It will receive 'Role' data and processed (save/update) to database

@@ -1,10 +1,11 @@
 /*
    Package router for 'Account' module
 */
-package router
+package account
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/reshimahendra/gin-starter/internal/account/router"
 	"gorm.io/gorm"
 )
 
@@ -23,5 +24,7 @@ func New(r *gin.Engine, db *gorm.DB) *account{
 
 // Router() is the main router for 'Account' module
 func (a *account) Router() {
-    // api := a.db
+    // Create user router instance and run it 
+    user := router.NewUser(a.router, a.db)
+    user.Run()
 }

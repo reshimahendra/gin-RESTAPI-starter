@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/reshimahendra/gin-starter/internal/account"
 	"github.com/reshimahendra/gin-starter/pkg/logger"
 	"github.com/reshimahendra/gin-starter/pkg/middleware"
 	"github.com/spf13/viper"
@@ -53,6 +54,10 @@ func Router(db *gorm.DB) *gin.Engine {
     // custom Middleware
     router.Use(middleware.CORS())
     router.Use(middleware.Security())
+
+    // Run Account module router 
+    account := account.New(router, db)
+    account.Router()
 
     return router
 }

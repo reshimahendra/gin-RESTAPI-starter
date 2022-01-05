@@ -1,19 +1,27 @@
 /*
-    Package 'model' helper for 'User' model
-    * DTO to Model conversion
-    * Model to DTO conversion
+   Package 'service' helper for 'User' model
+   * DTO to Model conversion
+   * Model to DTO conversion
 */
-package model
+package service
+
+import (
+	"github.com/reshimahendra/gin-starter/internal/account/model"
+	"github.com/reshimahendra/gin-starter/pkg/logger"
+)
 
 // convert 'User' model to 'Response' struct before displaying to client
-func UserToResponse(user User) *UserResponse{
+func UserToResponse(user model.User) *UserResponse{
     // check Role
     var role RoleResponse
-    if user.Role != nil {
+    if &user.Role != nil {
         role.ID = user.Role.ID
         role.Description = user.Role.Description
         role.Name = user.Role.Name
     }
+
+    logger.Infof("User ro response: %v", user)
+    logger.Infof("User ro response: %v", user.Role)
 
     return &UserResponse{
         ID        : user.ID,
@@ -21,23 +29,24 @@ func UserToResponse(user User) *UserResponse{
         Firstname : user.Firstname,
         Lastname  : user.Lastname,
         Email     : user.Email,
-        Password  : user.Password,
+        Password  : "[protected]",
         Active    : user.Active,
+        RoleID    : user.RoleID,
         Role      : &role,
     }
 }
 
 // convert 'Request' data from client to 'User' model before pased to database
-func RequestToUser(userRx UserRequest) *User{
+func RequestToUser(userRx UserRequest) *model.User{
     // check Role
-    var role Role
+    var role model.Role
     if userRx.Role != nil {
         role.ID = userRx.Role.ID
         role.Name = userRx.Role.Name
         role.Description = userRx.Role.Description
     }
 
-    return &User{
+    return &model.User{
         Username  : userRx.Username,
         Firstname : userRx.Firstname,
         Lastname  : userRx.Lastname,

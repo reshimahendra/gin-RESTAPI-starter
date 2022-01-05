@@ -16,7 +16,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
-	"github.com/reshimahendra/gin-starter/internal/account/model"
 	"github.com/reshimahendra/gin-starter/internal/account/service"
 	"github.com/reshimahendra/gin-starter/internal/pkg/auth"
 	"github.com/reshimahendra/gin-starter/internal/pkg/helper"
@@ -54,7 +53,7 @@ type Controller struct {
 
 // Signup controller
 func (ctl *Controller) Signup(c *gin.Context) {    
-    var u model.UserRequest
+    var u service.UserRequest
 
     err := c.ShouldBindJSON(&u)
     if err != nil {
@@ -82,7 +81,7 @@ func (ctl *Controller) Signup(c *gin.Context) {
     }
 
     // convert 'dto User request' to 'model User'
-    responseUser := model.RequestToUser(u)
+    responseUser := service.RequestToUser(u)
 
     user, err := service.SaveUser(ctl.db, *responseUser)
     if err != nil {
