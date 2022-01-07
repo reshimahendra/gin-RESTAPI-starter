@@ -34,7 +34,7 @@ func Run() {
     }
 
     // Initialize and prepare Database
-    db := database.GetDB()
+    db := database.DB()
 
     // Initialize and prepare to load main router 
     r := Router(db)

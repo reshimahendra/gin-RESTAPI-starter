@@ -39,13 +39,13 @@ func getWriter() io.Writer {
     }
 }
 
-// Return a Database Connection
-func GetDB() *gorm.DB {
+// DB will return Database Connection
+func DB() *gorm.DB {
     return db
 }
 
 // Return DB Error
-func GetDBErr() error {
+func DBErr() error {
     return dbErr
 }
 
