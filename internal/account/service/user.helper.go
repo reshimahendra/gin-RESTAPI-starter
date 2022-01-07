@@ -7,55 +7,58 @@ package service
 
 import (
 	"github.com/reshimahendra/gin-starter/internal/account/model"
-	"github.com/reshimahendra/gin-starter/pkg/logger"
 )
 
 // convert 'User' model to 'Response' struct before displaying to client
-func UserToResponse(user model.User) *UserResponse{
+func UserToResponse(user model.User) (userResponse *UserResponse) {
+    var dtoResponse UserResponse
     // check Role
-    var role RoleResponse
-    if &user.Role != nil {
-        role.ID = user.Role.ID
-        role.Description = user.Role.Description
-        role.Name = user.Role.Name
+    if user.Role != nil {
+        dtoResponse.Role = &RoleResponse{
+            ID : user.Role.ID,
+            Description : user.Role.Description,
+            Name : user.Role.Name,
+        }
+    } else {
+        dtoResponse.Role = nil
     }
 
-    logger.Infof("User ro response: %v", user)
-    logger.Infof("User ro response: %v", user.Role)
+    dtoResponse.ID = user.ID
+    dtoResponse.Username  = user.Username
+    dtoResponse.Firstname = user.Firstname
+    dtoResponse.Lastname  = user.Lastname
+    dtoResponse.Email     = user.Email
+    dtoResponse.Password  = "[protected]"
+    dtoResponse.Active    = user.Active
+    dtoResponse.RoleID    = user.RoleID
 
-    return &UserResponse{
-        ID        : user.ID,
-        Username  : user.Username,
-        Firstname : user.Firstname,
-        Lastname  : user.Lastname,
-        Email     : user.Email,
-        Password  : "[protected]",
-        Active    : user.Active,
-        RoleID    : user.RoleID,
-        Role      : &role,
-    }
+    userResponse = &dtoResponse
+    return
 }
 
 // convert 'Request' data from client to 'User' model before pased to database
-func RequestToUser(userRx UserRequest) *model.User{
+func RequestToUser(userRx UserRequest) (user *model.User) {
+    var userTmp model.User
     // check Role
-    var role model.Role
     if userRx.Role != nil {
-        role.ID = userRx.Role.ID
-        role.Name = userRx.Role.Name
-        role.Description = userRx.Role.Description
+        userTmp.Role = &model.Role{
+            ID          : userRx.Role.ID,
+            Name        : userRx.Role.Name,
+            Description : userRx.Role.Description,
+        }
     }
 
-    return &model.User{
-        Username  : userRx.Username,
-        Firstname : userRx.Firstname,
-        Lastname  : userRx.Lastname,
-        Email     : userRx.Email,
-        Password  : userRx.Password,
-        Active    : userRx.Active,
-        RoleID    : userRx.RoleID,
-        Role      : &role,
-    }
+    userTmp.Username  = userRx.Username
+    userTmp.Firstname = userRx.Firstname
+    userTmp.Lastname  = userRx.Lastname
+    userTmp.Email     = userRx.Email
+    userTmp.Password  = userRx.Password
+    userTmp.Active    = userRx.Active
+    userTmp.RoleID    = userRx.RoleID
+    
+    user = &userTmp
+
+    return
 }
 
 // UserResponseToRequest will convert 'Response' data from client 
@@ -77,6 +80,5 @@ func UserResponseToRequest(userTx UserResponse) *UserRequest {
         Password  : userTx.Password,
         Active    : userTx.Active,
         RoleID    : userTx.RoleID,
-        Role      : &role,
     }
 }

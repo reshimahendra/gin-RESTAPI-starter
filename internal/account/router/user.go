@@ -44,7 +44,10 @@ func (a *user) Run() {
     // Protected area
 
     // Non Protected area
-    r.GET("/:user", api.Get)
+    r.GET("/username/:user", api.Get)
+    r.GET("/email/:email", api.GetByEmail)
+    r.GET("/", api.Gets)
+    r.PUT("/:username", api.Update)
     r.POST("/", api.Save)
 }
 

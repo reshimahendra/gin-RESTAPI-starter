@@ -8,8 +8,8 @@ package service
 import (
 	"github.com/google/uuid"
 	"github.com/reshimahendra/gin-starter/internal/account/repository"
+	"github.com/reshimahendra/gin-starter/internal/database/dberror"
 	"github.com/reshimahendra/gin-starter/internal/pkg/helper"
-	"github.com/reshimahendra/gin-starter/pkg/logger"
 )
 
 // UserRequest is 'DTO' (Data Transfer Object) for 'User' request
@@ -20,8 +20,8 @@ type UserRequest struct {
     Lastname  string        `json:"last_name"`
     Email     string        `json:"email" binding:"required"`
     Password  string        `json:"password" binding:"required"`
-    Active    bool          `json:"active"`
-    RoleID    uint          `json:"role_id"`
+    Active    bool          `json:"active,default=false"`
+    RoleID    uint          `json:"role_id" binding:"required"`
     Role      *RoleRequest  `json:"role"`
 }
 
@@ -53,9 +53,10 @@ type UserService interface {
     Get(username string) (user *UserResponse, err error) 
     GetByEmail(username string) (user *UserResponse, err error)
     Gets() (users *[]UserResponse, err error)
-    CheckCredential(username, password string) (isActive, isValid bool)
     Save(input UserRequest) (user *UserResponse, err error)
-    Update(username string) (user *UserResponse, err error)
+    Update(username string, input UserRequest) (user *UserResponse, err error)
+    CheckCredential(username, password string) (isActive, isValid bool)
+    UserNotFound(username string) (isUserNotFound bool)
 }
 
 
@@ -91,13 +92,13 @@ func (s *userService) GetByEmail(email string) (user *UserResponse, err error){
 
 // Gets will fetch all 'User' data and returning *[]UserResponse DTO
 func (s *userService) Gets() (users *[]UserResponse, err error){
-    tmp, err := s.repo.Gets()
+    userTmp, err := s.repo.Gets()
 
     var resTemp []UserResponse
-    for _, user := range *tmp {
+    for _, user := range *userTmp {
         resTemp = append(resTemp, *UserToResponse(user)) 
     }
-
+    
     users = &resTemp
 
     return
@@ -115,13 +116,21 @@ func (s *userService) CheckCredential(username, password string) (isActive, isVa
 // Save will convert DTO to saveable format before passed to 'user repository'
 // It will returning *UserResponse DTO and error status
 func (s *userService) Save(input UserRequest) (user *UserResponse, err error){
+    // check if password length is less than minimum required password length
+    // exit process if the password too short
+    if helper.PasswordTooShort(input.Password) { 
+        err = dberror.New(dberror.ErrPasswordTooShort, nil)
+        return
+    }
+
+    // create hashed password for the user. if error, exit the process 
+    input.Password, err = helper.HashPassword(input.Password)
+    if err != nil {
+        return
+    }
+
     // convert from 'DTO' to 'User' model so we can process it to the database 
     inputUser := RequestToUser(input)
-
-    inputUser.Password, err = helper.HashPassword(inputUser.Password)
-    if err != nil {
-        logger.Errorf("Could not hash password: %v", err)
-    }
 
     // perform save operation
     savedUser, err := s.repo.Save(*inputUser)
@@ -136,12 +145,50 @@ func (s *userService) Save(input UserRequest) (user *UserResponse, err error){
 
 // Update will send update data request to repository to update certain user
 // It returning *UserResponse and error status
-func (s *userService) Update(username string) (user *UserResponse, err error) {
+func (s *userService) Update(username string, input UserRequest) (user *UserResponse, err error) {
+    // check whether username is valid/ registered as well as get hashedPassword
+    // and active status for data comparison
+    hashedPassword, isActive := s.repo.CheckCredential(username)
+    if len(hashedPassword) == 0 && !isActive {
+        err = dberror.New(dberror.ErrDataNotFound, nil)
+
+        return
+    }
+
+    // check if new password length is less than minimum required password length
+    // if the password too short, exit the process 
+    if helper.PasswordTooShort(input.Password) { 
+        err = dberror.New(dberror.ErrPasswordTooShort, nil)
+        return 
+    }
+
+    // check whether on the new user data the password has been changed
+    if !helper.CheckPasswordHash(input.Password, hashedPassword) {
+        // if changed, create new hashed password
+        hashedPassword, err = helper.HashPassword(input.Password)
+        if err != nil {
+            return
+        }
+    }
+    input.Password = hashedPassword
+
+    // convert request DTO to savable model format 
+    inputUser := RequestToUser(input)
+
     // Send request to update user data to the repository 
-    userTmp, err := s.repo.Update(username)
+    userTmp, err := s.repo.Update(username, *inputUser)
+    if err != nil {
+        return
+    }
 
     // Convert 'User' data to response 'DTO' before forward it to the client
     user = UserToResponse(*userTmp)
 
     return
+}
+
+
+// UserNotFound will send request to repository to check whether user data is found or not
+func (s *userService) UserNotFound(username string) (isUserNotFound bool) {
+    return s.repo.UserNotFound(username)
 }
