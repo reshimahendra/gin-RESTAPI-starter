@@ -13,7 +13,7 @@ type UserRepository interface {
     Get(username string) (user *m.User, err error) 
     GetByEmail(username string) (user *m.User, err error)
     Gets() (users *[]m.User, err error)
-    Save(input m.User) (user *m.User, err error)
+    Create(input m.User) (user *m.User, err error)
     Update(username string, input m.User) (user *m.User, err error)
 
     /* Functional interface */
@@ -76,11 +76,11 @@ func (r *userRepository) Gets() (users *[]m.User, err error) {
     return
 }
 
-// Save will save 'User' data to the database
+// Create will insert new 'User' record with it associates(if available) to the database
 // It will returning 'User' data and 'error' value 
-func (r *userRepository) Save(input m.User) (user *m.User, err error) {
+func (r *userRepository) Create(input m.User) (user *m.User, err error) {
     // err = r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&input).Error
-    if err = r.db.Save(&input).Error; err != nil {
+    if err = r.db.Create(&input).Error; err != nil {
         return nil, err 
     }
 
