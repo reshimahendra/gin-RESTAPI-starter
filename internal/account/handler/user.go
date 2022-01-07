@@ -79,9 +79,9 @@ func (h *userHandler) Gets(c *gin.Context) {
     helper.APIResponse(c, http.StatusOK, "success retreiving users data.", usersDto)
 }
 
-// Save will process request data from client, forward it to 'service'
+// Create will process request data from client, forward it to 'service'
 // before passed to 'repository' and saved to the database
-func (h *userHandler) Save(c *gin.Context) {
+func (h *userHandler) Create(c *gin.Context) {
     var res service.UserRequest
 
     // check if the data is OK
@@ -94,7 +94,7 @@ func (h *userHandler) Save(c *gin.Context) {
         return
     }
 
-    dtoResponse, err := h.service.Save(res)
+    dtoResponse, err := h.service.Create(res)
     if err != nil {
         // save error 'save user data' to logfile
         logger.Errorf("error saving data: %v", err)
@@ -105,7 +105,11 @@ func (h *userHandler) Save(c *gin.Context) {
         return
     }
 
-    helper.APIResponse(c, http.StatusOK, "success saving "+dtoResponse.Username+" data.", dtoResponse)
+    helper.APIResponse(
+        c, 
+        http.StatusOK, 
+        "success saving "+dtoResponse.Username+" data.", 
+        dtoResponse)
 }
 
 // Update will sending request update data from client, forward it to 'service'
