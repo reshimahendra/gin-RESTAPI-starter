@@ -2,7 +2,7 @@
    Package database to handle error
    containing custom error for our app
 */
-package dberror
+package error
 
 import "fmt"
 
@@ -31,6 +31,10 @@ const (
 
     // ErrPasswordTooShort is error code for too short password
     ErrPasswordTooShort
+
+    // ErrParamIDEmpty is error code for empty param that retreived from 'context'
+    ErrParamIDEmpty
+
 )
 
 
@@ -68,6 +72,7 @@ func Message(code uint) (message string) {
         case ErrDataExist           : message = "error data already exist."
         case ErrPasswordNotMatch    : message = "error password not match."
         case ErrPasswordTooShort    : message = "error password too short."
+        case ErrParamIDEmpty        : message = "error param id is empty."
         default                     : message = "error while processing data."
     }
 
