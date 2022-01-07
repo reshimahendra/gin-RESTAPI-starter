@@ -27,28 +27,39 @@ func NewUser(r *gin.Engine, db *gorm.DB) *user{
 }
 
 // Run will execute router for 'User' model 
-func (a *user) Run() {
+func (u *user) Run() {
     // Auto Migrate all model available on user module 
-    a.db.AutoMigrate(
+    u.db.AutoMigrate(
         &model.User{},
         &model.Role{},
     )
     // Group for 'User' module
-    r := a.router.Group("/user")
+    r := u.router.Group("/user")
     
     // create repository, service, and handler instance for user model
-    repo := repository.NewUser(a.db)
-    service := service.NewUser(repo)
-    api := handler.NewUser(service)
+    repoUser    := repository.NewUser(u.db)
+    serviceUser := service.NewUser(repoUser)
+    apiUser     := handler.NewUser(serviceUser)
+
+    // create repository, service, and handler instance for user model
+    repoRole        := repository.NewUserRole(u.db)
+    serviceRole     := service.NewUserRole(repoRole)
+    apiUserRole     := handler.NewUserRole(serviceRole)
 
     // Protected area
+    // Create group router for 'Role' under 'User' group router
+    uRole := r.Group("/role")
+    uRole.GET("/:id", apiUserRole.Get)
+    uRole.GET("/", apiUserRole.Gets)
+    uRole.PUT("/:id", apiUserRole.Update)
+    uRole.POST("/", apiUserRole.Create)
 
     // Non Protected area
-    r.GET("/username/:user", api.Get)
-    r.GET("/email/:email", api.GetByEmail)
-    r.GET("/", api.Gets)
-    r.PUT("/:username", api.Update)
-    r.POST("/", api.Save)
+    r.GET("/username/:user", apiUser.Get)
+    r.GET("/email/:email", apiUser.GetByEmail)
+    r.GET("/", apiUser.Gets)
+    r.PUT("/:username", apiUser.Update)
+    r.POST("/", apiUser.Create)
 }
 
 
