@@ -6,8 +6,45 @@
 package service
 
 import (
+	"github.com/google/uuid"
 	"github.com/reshimahendra/gin-starter/internal/account/model"
 )
+
+// UserRequest is 'DTO' (Data Transfer Object) for 'User' request
+// It will receive 'User' data and processed (save/update) to database
+type UserRequest struct {
+    Username  string        `json:"username" binding:"required"`
+    Firstname string        `json:"first_name" binding:"required"`
+    Lastname  string        `json:"last_name"`
+    Email     string        `json:"email" binding:"required"`
+    Password  string        `json:"password" binding:"required"`
+    Active    bool          `json:"active,default=false"`
+    RoleID    uint          `json:"role_id" binding:"required"`
+    Role      *RoleRequest  `json:"role"`
+}
+
+// UserResponse is 'DTO' (Data Transfer Object) for 'User' model 
+// It will send 'User' data to client 
+type UserResponse struct {
+    ID        uuid.UUID     `json:"id"`
+    Username  string        `json:"username"`
+    Firstname string        `json:"first_name"`
+    Lastname  string        `json:"last_name"`
+    Email     string        `json:"email"`
+    Password  string        `json:"password"`
+    Active    bool          `json:"active"`
+    RoleID    uint          `json:"role_id"`
+    Role      *RoleResponse `json:"role"`
+}
+
+// Credential is 'DTO' (Data Transfer Object) for user response 
+// This is used for login/ credential checking or other similar operation
+type Credential struct {
+    Username  string `json:"username"`
+    Email     string `json:"email"`
+    Password  string `json:"password"`
+    Active    bool   `json:"active"`
+}
 
 // convert 'User' model to 'Response' struct before displaying to client
 func UserToResponse(user model.User) (userResponse *UserResponse) {
@@ -63,7 +100,7 @@ func RequestToUser(userRx UserRequest) (user *model.User) {
 
 // UserResponseToRequest will convert 'Response' data from client 
 // into 'Request' before pased to database
-func UserResponseToRequest(userTx UserResponse) *UserRequest {
+func ResponseToRequestUser(userTx UserResponse) *UserRequest {
     // check Role
     var role RoleRequest
     if userTx.Role != nil {
