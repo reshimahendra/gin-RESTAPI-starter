@@ -6,54 +6,17 @@
 package service
 
 import (
-	"github.com/google/uuid"
 	"github.com/reshimahendra/gin-starter/internal/account/repository"
-	"github.com/reshimahendra/gin-starter/internal/database/error"
+	dbErr "github.com/reshimahendra/gin-starter/internal/database/error"
 	"github.com/reshimahendra/gin-starter/internal/pkg/helper"
 )
-
-// UserRequest is 'DTO' (Data Transfer Object) for 'User' request
-// It will receive 'User' data and processed (save/update) to database
-type UserRequest struct {
-    Username  string        `json:"username" binding:"required"`
-    Firstname string        `json:"first_name" binding:"required"`
-    Lastname  string        `json:"last_name"`
-    Email     string        `json:"email" binding:"required"`
-    Password  string        `json:"password" binding:"required"`
-    Active    bool          `json:"active,default=false"`
-    RoleID    uint          `json:"role_id" binding:"required"`
-    Role      *RoleRequest  `json:"role"`
-}
-
-// UserResponse is 'DTO' (Data Transfer Object) for 'User' model 
-// It will send 'User' data to client 
-type UserResponse struct {
-    ID        uuid.UUID     `json:"id"`
-    Username  string        `json:"username"`
-    Firstname string        `json:"first_name"`
-    Lastname  string        `json:"last_name"`
-    Email     string        `json:"email"`
-    Password  string        `json:"password"`
-    Active    bool          `json:"active"`
-    RoleID    uint          `json:"role_id"`
-    Role      *RoleResponse `json:"role"`
-}
-
-// Credential is 'DTO' (Data Transfer Object) for user response 
-// This is used for login/ credential checking or other similar operation
-type Credential struct {
-    Username  string `json:"username"`
-    Email     string `json:"email"`
-    Password  string `json:"password"`
-    Active    bool   `json:"active"`
-}
 
 // UserService is Interface for User Repository with our Handler 
 type UserService interface {
     Get(username string) (user *UserResponse, err error) 
     GetByEmail(username string) (user *UserResponse, err error)
     Gets() (users *[]UserResponse, err error)
-    Save(input UserRequest) (user *UserResponse, err error)
+    Create(input UserRequest) (user *UserResponse, err error)
     Update(username string, input UserRequest) (user *UserResponse, err error)
     CheckCredential(username, password string) (isActive, isValid bool)
     UserNotFound(username string) (isUserNotFound bool)
@@ -113,13 +76,13 @@ func (s *userService) CheckCredential(username, password string) (isActive, isVa
     return
 }
 
-// Save will convert DTO to saveable format before passed to 'user repository'
+// Create will convert DTO to saveable format before passed to 'user repository'
 // It will returning *UserResponse DTO and error status
-func (s *userService) Save(input UserRequest) (user *UserResponse, err error){
+func (s *userService) Create(input UserRequest) (user *UserResponse, err error){
     // check if password length is less than minimum required password length
     // exit process if the password too short
     if helper.PasswordTooShort(input.Password) { 
-        err = dberror.New(dberror.ErrPasswordTooShort, nil)
+        err = dbErr.New(dbErr.ErrPasswordTooShort, nil)
         return
     }
 
@@ -133,7 +96,7 @@ func (s *userService) Save(input UserRequest) (user *UserResponse, err error){
     inputUser := RequestToUser(input)
 
     // perform save operation
-    savedUser, err := s.repo.Save(*inputUser)
+    savedUser, err := s.repo.Create(*inputUser)
 
     // convert back to 'response' DTO before sending back to the user
     if err == nil {
@@ -150,7 +113,7 @@ func (s *userService) Update(username string, input UserRequest) (user *UserResp
     // and active status for data comparison
     hashedPassword, isActive := s.repo.CheckCredential(username)
     if len(hashedPassword) == 0 && !isActive {
-        err = dberror.New(dberror.ErrDataNotFound, nil)
+        err = dbErr.New(dbErr.ErrDataNotFound, nil)
 
         return
     }
@@ -158,7 +121,7 @@ func (s *userService) Update(username string, input UserRequest) (user *UserResp
     // check if new password length is less than minimum required password length
     // if the password too short, exit the process 
     if helper.PasswordTooShort(input.Password) { 
-        err = dberror.New(dberror.ErrPasswordTooShort, nil)
+        err = dbErr.New(dbErr.ErrPasswordTooShort, nil)
         return 
     }
 
