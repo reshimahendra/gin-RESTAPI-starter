@@ -26,6 +26,13 @@ type ErrorResponse struct{
     Error   interface{} `json:"error"`
 }
 
+// Error is custom dbError struct
+type Error struct {
+    ErrCode uint    `json:"code"`
+    Message string  `json:"message,omitempty"`
+    Error   error   `json:"error"`
+}
+
 // APIResponse will send JSON response to the client and some additional detail
 func APIResponse(c *gin.Context, statusCode int, message string, data interface{}) {
     // prepare the response before sending to the client 
@@ -83,8 +90,3 @@ func ValidationError(err error) (eMessage *[]string) {
     return
 }
 
-// APIValidationErrorResponse is wrapper of 2 function, 'APIErrorResponse' and 'ValidationError'
-// It just to simplify it instead of calling both of them at same time (it mostly be called in tandem)
-func APIValidationErrorResponse(c *gin.Context, statusCode int, err interface{}) {
-    APIErrorResponse(c, statusCode, ValidationError(err.(error)))
-}
