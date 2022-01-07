@@ -8,7 +8,7 @@ package service
 import (
 	"github.com/google/uuid"
 	"github.com/reshimahendra/gin-starter/internal/account/repository"
-	"github.com/reshimahendra/gin-starter/internal/database/dberror"
+	"github.com/reshimahendra/gin-starter/internal/database/error"
 	"github.com/reshimahendra/gin-starter/internal/pkg/helper"
 )
 
