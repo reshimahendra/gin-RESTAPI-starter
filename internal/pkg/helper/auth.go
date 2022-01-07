@@ -5,8 +5,10 @@ import (
 	"encoding/base64"
 	"errors"
 	mRand "math/rand"
+	"net/mail"
 	"time"
 
+	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -74,4 +76,19 @@ func CheckPasswordHash(password, hash string) bool {
     err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 
     return err == nil
+}
+
+// EmailIsValid will check whether given email was valid
+func EmailIsValid(email string) (isValid bool) {
+    _, err := mail.ParseAddress(email)
+
+    isValid = err == nil
+
+    return
+}
+
+// PasswordTooShort will check whether password length is not match the minimum 
+// password lenght for the user account
+func PasswordTooShort(password string) (isPasswordtooShort bool) {
+    return len(password) < viper.GetInt("account.minimum_password_length")
 }
