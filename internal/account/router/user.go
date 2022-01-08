@@ -9,6 +9,7 @@ import (
 	"github.com/reshimahendra/gin-starter/internal/account/model"
 	"github.com/reshimahendra/gin-starter/internal/account/repository"
 	"github.com/reshimahendra/gin-starter/internal/account/service"
+	"github.com/reshimahendra/gin-starter/pkg/middleware"
 	"gorm.io/gorm"
 )
 
@@ -33,26 +34,32 @@ func (u *user) Run() {
         &model.User{},
         &model.Role{},
     )
-    // Group for 'User' module
-    r := u.router.Group("/user")
-    
     // create repository, service, and handler instance for user model
     repoUser    := repository.NewUser(u.db)
     serviceUser := service.NewUser(repoUser)
     apiUser     := handler.NewUser(serviceUser)
+
 
     // create repository, service, and handler instance for user model
     repoRole        := repository.NewUserRole(u.db)
     serviceRole     := service.NewUserRole(repoRole)
     apiUserRole     := handler.NewUserRole(serviceRole)
 
-    // Protected area
-    // Create group router for 'Role' under 'User' group router
-    uRole := r.Group("/role")
-    uRole.GET("/:id", apiUserRole.Get)
-    uRole.GET("/", apiUserRole.Gets)
-    uRole.PUT("/:id", apiUserRole.Update)
-    uRole.POST("/", apiUserRole.Create)
+    // Group for Auth
+    // Api for AUTH using 'User' service package
+    rAuth := u.router.Group("/auth")
+    rAuth.POST("/sign-up", apiUser.Signup)
+    rAuth.POST("/sign-in", apiUser.Signin)
+
+    // Protected area for AUTH endpoint
+    rAuth.Use(middleware.Authorize())
+    {
+        rAuth.POST("/refresh-token", apiUser.RefreshToken)
+        rAuth.POST("/check-token", apiUser.CheckToken)
+    }
+
+    // Group for 'User' module
+    r := u.router.Group("/user")
 
     // Non Protected area
     r.GET("/username/:user", apiUser.Get)
@@ -60,6 +67,14 @@ func (u *user) Run() {
     r.GET("/", apiUser.Gets)
     r.PUT("/:username", apiUser.Update)
     r.POST("/", apiUser.Create)
+    
+    // Protected area
+    // Create group router for 'Role' under 'User' group router
+    uRole := r.Group("/role")
+    uRole.GET("/:id", apiUserRole.Get)
+    uRole.GET("/", apiUserRole.Gets)
+    uRole.PUT("/:id", apiUserRole.Update)
+    uRole.POST("/", apiUserRole.Create)
 }
 
 
