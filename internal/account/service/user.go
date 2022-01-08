@@ -72,6 +72,12 @@ func (s *userService) Gets() (users *[]UserResponse, err error){
 // Create will convert DTO to saveable format before passed to 'user repository'
 // It will returning *UserResponse DTO and error status
 func (s *userService) Create(input UserRequest) (user *UserResponse, err error){
+    // check if request 'email' field is valid email value
+    if !helper.EmailIsValid(input.Email) {
+        err = E.NewSimpleError(E.ErrEmailIsInvalid)
+        return
+    }
+
     // check if password length is less than minimum required password length
     // exit process if the password too short
     if helper.PasswordTooShort(input.Password) { 
@@ -103,6 +109,12 @@ func (s *userService) Create(input UserRequest) (user *UserResponse, err error){
 // Update will send update data request to repository to update certain user
 // It returning *UserResponse and error status
 func (s *userService) Update(username string, input UserRequest) (user *UserResponse, err error) {
+    // check if request 'email' field is valid email value
+    if !helper.EmailIsValid(input.Email) {
+        err = E.NewSimpleError(E.ErrEmailIsInvalid)
+        return
+    }
+
     // check whether username is valid/ registered as well as get hashedPassword
     // and active status for data comparison
     hashedPassword, isActive := s.repo.CheckCredential(username)

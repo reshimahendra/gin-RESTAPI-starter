@@ -49,10 +49,10 @@ func (h *userHandler) Get(c *gin.Context) {
 func (h *userHandler) GetByEmail(c *gin.Context) {
     // get the param value that shipped with context
     email := c.Params.ByName("email")
-    // logger.Infof("v", helper.MailIsValid(email))
     if !helper.EmailIsValid(email) {
-        logger.Errorf("invalid email.")
-        helper.APIErrorResponse(c, http.StatusBadRequest, "invalid email.")
+        err := E.NewSimpleError(E.ErrEmailIsInvalid)
+        logger.Errorf("get user by email: %v", err)
+        helper.APIErrorResponse(c, http.StatusBadRequest, err)
         return
     }
 
@@ -71,7 +71,7 @@ func (h *userHandler) GetByEmail(c *gin.Context) {
 func (h *userHandler) Gets(c *gin.Context) {
     usersDto, err := h.service.Gets()
     if err != nil {
-        logger.Errorf("error retreiving user data.")
+        logger.Errorf("error retreiving user data: %v", err)
         helper.APIErrorResponse(c, http.StatusBadRequest, err)
         return
     }
@@ -141,7 +141,7 @@ func (h *userHandler) Update(c *gin.Context) {
         // saving error 'updating user data' to logfile
         e := E.New(E.ErrUpdateDataFail, err)
         logger.Errorf("update user. %s: %v", E.ErrUpdateDataFailMsg, e)
-        helper.APIErrorResponse(c, http.StatusBadRequest, e)
+        helper.APIErrorResponse(c, http.StatusBadRequest, err)
         return
     }
 

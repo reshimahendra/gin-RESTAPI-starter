@@ -75,6 +75,8 @@ func Message(code uint) (message string) {
         // handler error
         case ErrParamIsEmpty        : message = ErrParamIsEmptyMsg
         case ErrParamIsInvalid      : message = ErrParamIsInvalidMsg
+        case ErrUsernameIsInvalid   : message = ErrUsernameIsInvalidMsg
+        case ErrEmailIsInvalid      : message = ErrEmailIsInvalidMsg
         case ErrRequestDataInvalid  : message = ErrRequestDataInvalidMsg
 
         // default/ unknown error
