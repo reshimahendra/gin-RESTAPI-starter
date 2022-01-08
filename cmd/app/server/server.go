@@ -22,7 +22,6 @@ func Run() {
             3. Initialize router
             4. Run the server
     */
-    fmt.Println("Masuk init")
     // Setup server 
     if err := config.Setup(); err != nil {
         logger.Fatalf("Initializing server fail: %s", err)
@@ -47,8 +46,11 @@ func Run() {
 
     baseURL := host + ":" + viper.GetString("server.port") 
 
-    logger.Infof("Server is running at %s", baseURL)
-    welcome("Lotus BaliWeb", "http://" + baseURL, "-", 46)
+    // display welcome message
+    if viper.GetBool("server.welcomeMessage") {
+        logger.Infof("Server is running at %s", baseURL)
+        welcome("Lotus BaliWeb", "http://" + baseURL, "-", 46)
+    }
     logger.Fatalf("%v", r.Run(baseURL))
 }
 
