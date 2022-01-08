@@ -26,6 +26,11 @@ func Router(db *gorm.DB) *gin.Engine {
         // Using release mode setting
         gin.SetMode(gin.ReleaseMode)
         router = gin.New()
+
+        // SET Middleware
+        // gin default Middleware
+        router.Use(gin.Logger())
+        router.Use(gin.Recovery())
     case "development": 
         router = gin.Default()
     default:
@@ -45,11 +50,6 @@ func Router(db *gorm.DB) *gin.Engine {
     } else {
         gin.DefaultWriter = io.MultiWriter(file)
     }
-
-    // SET Middleware
-    // gin default Middleware
-    router.Use(gin.Logger())
-    router.Use(gin.Recovery())
 
     // custom Middleware
     router.Use(middleware.CORS())

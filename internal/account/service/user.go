@@ -1,127 +1,175 @@
 /*
-    Package service for 'User'
+   Package service for 'User'
+   It will implementing interfaces available on 'user repository'
+   and create bridge for the 'repository' package and 'handler' package
 */
 package service
 
 import (
-	"github.com/reshimahendra/gin-starter/internal/account/model"
+	"github.com/reshimahendra/gin-starter/internal/account/repository"
 	"github.com/reshimahendra/gin-starter/internal/pkg/helper"
-	"github.com/reshimahendra/gin-starter/pkg/logger"
-	"gorm.io/gorm"
+	E "github.com/reshimahendra/gin-starter/pkg/errors"
 )
 
-func FindByCredential(email, password string) bool {
-    // TODO: below just a sample, you need to create the actual logic here later on
-    return email == "a@b.com" && password == "123"
+// UserService is Interface for User Repository with our Handler
+type UserService interface {
+    Get(username string) (user *UserResponse, err error) 
+    GetByEmail(username string) (user *UserResponse, err error)
+    Gets() (users *[]UserResponse, err error)
+    Create(input UserRequest) (user *UserResponse, err error)
+    Update(username string, input UserRequest) (user *UserResponse, err error)
+    CheckCredential(username, password string) (isActive, isValid bool)
+    CheckCredentialByMail(email, password string) (isActive, isValid bool)
+    UserNotFound(username string) (isUserNotFound bool)
+    UserAvailable(username, email string) (isUserAvailable bool)
 }
 
-/* USER */
-// GET 'USER'by ID
-func GetUser(db *gorm.DB, id string) (user *model.User, err error) {
-    if err = db.Where("id = ?", id).First(&user).Error; err != nil {
-        logger.Errorf("Error finding 'User' data: %v", err)
-        return nil, err
-    }
 
-    // get user role ID
-    if user.RoleID >0 {
-        var role model.Role
-        if err = db.Where("id = ?", user.RoleID).First(&role).Error; err == nil {
-            user.Role = &role
-        }
-    }
+// userService is a type wrapper for 'UserRepository' interface 
+type userService struct {
+    repo repository.UserRepository
+}
 
+// NewUser will return userService instance to connect the service and repository
+func NewUser(repo repository.UserRepository) *userService {
+    return &userService{repo: repo}
+}
+
+// Get will retreive User 'DTO' (by username) that prepared by user repository
+// It will returning *UserResponse DTO and error status
+func (s *userService) Get(username string) (user *UserResponse, err error) {
+    userTmp, err := s.repo.Get(username)
+
+    // Conver 'User' model to 'DTO' fromat
+    user = UserToResponse(*userTmp)
+
+    return 
+}
+
+// GetByEmail will fetch 'User' data based on given 'email' value
+// It will returning *UserResponse DTO and error status
+func (s *userService) GetByEmail(email string) (user *UserResponse, err error){
+    userTmp, err := s.repo.GetByEmail(email)
+
+    user = UserToResponse(*userTmp)
     return
 }
 
-// GET ALL 'USERS'
-func GetUsers(db *gorm.DB) (users *[]model.User, err error) {
-    if err = db.Find(&users).Error; err != nil {
-        logger.Errorf("Error getting 'user' data: %v", err)
-        return nil, err
+// Gets will fetch all 'User' data and returning *[]UserResponse DTO
+func (s *userService) Gets() (users *[]UserResponse, err error){
+    userTmp, err := s.repo.Gets()
+
+    var resTemp []UserResponse
+    for _, user := range *userTmp {
+        resTemp = append(resTemp, *UserToResponse(user)) 
     }
-
-    return
-}
-
-// GET `USER` by Username
-func GetUserByUsername(db *gorm.DB, username string) (user *model.User, err error) {
-    if err = db.Where("username = ?", username).Error; err != nil {
-        logger.Errorf("Error getting 'user' data: %v", err)
-        return nil, err
-    }
-
-    return
-}
-
-// GET `USER` by Email 
-func GetUserByEmail(db *gorm.DB, email string) (user *model.User, err error) {
-    if err = db.Where("email = ?", email).Error; err != nil {
-        logger.Errorf("Error checking user data: %v", err)
-        return nil, err
-    }
-
-    return
-}
-
-// Check `USER` exist by Username OR password
-func IsUserExist(db *gorm.DB, email, username string) bool {
-    if err := db.Where("email = ? OR username = ?", email, username).Error; err != nil {
-        logger.Errorf("Error checking user data: %v", err)
-        return false
-    }
-
-    return true
-}
-
-// GET 'USER' credential by 'USERNAME'
-// return 
-// * password string
-// * active bool
-// * registered bool 
-func CredentialByUsername(db *gorm.DB, username, password string) (string, bool, bool) {
-    var u model.User
-    if err := db.Debug().Where("username = ? AND password = ?", username, password).First(&u).Error; err != nil {
-        logger.Errorf("Error getting 'user' data: %v", err)
-        return "", false, false
-    }
-
-    return u.Password, u.Active, true
-}
-
-
-// GET 'USER' credential by 'EMAIL'
-// return 
-// * password string
-// * active bool
-// * passwordMatch bool 
-func CredentialByEmail(db *gorm.DB, email, password string) (isActive bool, isPasswordMatch bool) {
     
-    var u model.User
-    if err := db.Debug().Where("email = ? ", email).First(&u).Error; err != nil {
-        logger.Errorf("Error getting credential data: %v", err)
-        return false, false
-    }
-    isPasswordMatch = helper.CheckPasswordHash(password, u.Password) 
-    isActive = u.Active
+    users = &resTemp
 
     return
 }
 
-// POST/ PUT 'USER'
-func SaveUser(db *gorm.DB, input model.User) (user *model.User, err error) {
-    err = db.Save(&input).Error;
-    if err != nil {
-        logger.Errorf("Error saving 'user' data: %v", err)
-        return nil, err
+// Create will convert DTO to saveable format before passed to 'user repository'
+// It will returning *UserResponse DTO and error status
+func (s *userService) Create(input UserRequest) (user *UserResponse, err error){
+    // check if password length is less than minimum required password length
+    // exit process if the password too short
+    if helper.PasswordTooShort(input.Password) { 
+        err = E.NewSimpleError(E.ErrPasswordTooShort)
+        return
     }
 
-    if input.RoleID >0 {
-        var role model.Role
-        if err = db.Where("id = ?", input.RoleID).First(&role).Error; err == nil {
-            input.Role = &role
-        }
+    // create hashed password for the user. if error, exit the process 
+    hashPass, err := helper.HashPassword(input.Password)
+    if err != nil {
+        return
     }
-    return &input, err
+
+    // convert from 'DTO' to 'User' model so we can process it to the database
+    input.Password = hashPass
+    inputUser := RequestToUser(input)
+
+    // perform save operation
+    savedUser, err := s.repo.Create(*inputUser)
+
+    // convert back to 'response' DTO before sending back to the user
+    if err == nil {
+        user = UserToResponse(*savedUser)
+    }
+
+    return
 }
 
+// Update will send update data request to repository to update certain user
+// It returning *UserResponse and error status
+func (s *userService) Update(username string, input UserRequest) (user *UserResponse, err error) {
+    // check whether username is valid/ registered as well as get hashedPassword
+    // and active status for data comparison
+    hashedPassword, isActive := s.repo.CheckCredential(username)
+    if len(hashedPassword) == 0 && !isActive {
+        err = E.NewSimpleError(E.ErrDataNotFound)
+
+        return
+    }
+
+    // check if new password length is less than minimum required password length
+    // if the password too short, exit the process 
+    if helper.PasswordTooShort(input.Password) { 
+        err = E.NewSimpleError(E.ErrPasswordTooShort)
+
+        return 
+    }
+
+    // check whether on the new user data the password has been changed
+    if !helper.CheckPasswordHash(input.Password, hashedPassword) {
+        // if changed, create new hashed password
+        hashedPassword, err = helper.HashPassword(input.Password)
+        if err != nil {
+            return
+        }
+    }
+    input.Password = hashedPassword
+
+    // convert request DTO to savable model format 
+    inputUser := RequestToUser(input)
+
+    // Send request to update user data to the repository 
+    userTmp, err := s.repo.Update(username, *inputUser)
+    if err != nil {
+        return
+    }
+
+    // Convert 'User' data to response 'DTO' before forward it to the client
+    user = UserToResponse(*userTmp)
+
+    return
+}
+
+// CheckCredential will check wheter the given 'username' and 'password' is valid 
+// and the 'checked' user status is active 
+func (s *userService) CheckCredential(username, password string) (isActive, isValid bool){
+    hashedPassword, isActive := s.repo.CheckCredential(username)
+    isValid = helper.CheckPasswordHash(password, hashedPassword)
+
+    return
+}
+
+// CheckCredentialByMail will check wheter the given 'email' and 'password' is valid 
+// and the 'checked' user status is active 
+func (s *userService) CheckCredentialByMail(email, password string) (isActive, isValid bool) {
+    hashedPassword, isActive := s.repo.CheckCredentialByMail(email)
+    isValid = helper.CheckPasswordHash(password, hashedPassword)
+
+    return
+}
+
+
+// UserNotFound will send request to repository to check whether user data is found or not
+func (s *userService) UserNotFound(username string) (isUserNotFound bool) {
+    return s.repo.UserNotFound(username)
+}
+
+// UserAvailable will check whether username or email is available
+func (s *userService) UserAvailable(username, email string) (isUserAvailable bool) {
+    return s.repo.UserAvailable(username, email)
+}

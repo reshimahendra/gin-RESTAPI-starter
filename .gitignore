@@ -17,6 +17,7 @@ node_modules
 *.test
 
 # Go Patch
-/vendor/
+/tmp/
+/.tmp/
 /Godeps/
 dist

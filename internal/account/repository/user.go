@@ -18,7 +18,9 @@ type UserRepository interface {
 
     /* Functional interface */
     CheckCredential(username string) (hashedPassword string, isActive bool)
+    CheckCredentialByMail(email string) (hashedPassword string, isActive bool)
     UserNotFound(username string) (isUserNotFound bool)
+    UserAvailable(username, email string) (isUserAvailable bool)
 }
 
 // userRepository is type wrapper for our database instance
@@ -131,10 +133,35 @@ func (r *userRepository) CheckCredential(username string) (hashedPassword string
     return u.Password, u.Active
 }
 
+// CheckCredentialByMail will check 'User' credential by its email & password 
+// return 
+// * password (password of checked user for password comparation operation)
+// * active (status whether the user is active or not)
+func (r *userRepository) CheckCredentialByMail(email string) (hashedPassword string, isActive bool) {
+    var u m.User
+    if err := r.db.Where("email = ? ", email).First(&u).Error; err != nil {
+        return "", false
+    }
+
+    hashedPassword = u.Password
+    isActive = u.Active
+
+    return
+}
+
 // UserNotFound will check user whether user founded or not.
 func (r *userRepository) UserNotFound(username string) (isUserNotFound bool) {
     var tmpUser m.User
     isUserNotFound = r.db.Where("username = ?", username).First(&tmpUser).Error == gorm.ErrRecordNotFound
+
+    return
+}
+
+// UserAvailable will check whether username or email is available
+func (r *userRepository) UserAvailable(username, email string) (isUserAvailable bool) {
+    var tmpUser m.User
+    isUserAvailable = r.db.Where("username = ? OR email = ?", username, email).
+        First(&tmpUser).Error == gorm.ErrRecordNotFound 
 
     return
 }

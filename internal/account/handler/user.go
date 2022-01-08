@@ -4,13 +4,13 @@
 package handler
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/reshimahendra/gin-starter/internal/account/service"
 	"github.com/reshimahendra/gin-starter/internal/pkg/helper"
 	"github.com/reshimahendra/gin-starter/pkg/logger"
+	E "github.com/reshimahendra/gin-starter/pkg/errors"
 )
 
 // userHandler is Handler type wrapper for UserService
@@ -118,8 +118,9 @@ func (h *userHandler) Update(c *gin.Context) {
     // Get user param (username value)
     uname := c.Params.ByName("username")
     if uname == "" {
-        logger.Errorf("invalid username.")
-        helper.APIErrorResponse(c, http.StatusBadRequest, "invalid user.")
+        err := E.NewSimpleError(E.ErrParamIsInvalid)
+        logger.Errorf("update user. %v", err)
+        helper.APIErrorResponse(c, http.StatusBadRequest, err)
         return
     }
 
@@ -127,9 +128,10 @@ func (h *userHandler) Update(c *gin.Context) {
     var userReq service.UserRequest
     err := c.ShouldBindJSON(&userReq)
     if err != nil {
-        logger.Errorf("error processing request data: %v", err)
+        e := E.New(E.ErrRequestDataInvalid, err)
+        logger.Errorf("update user. %s: %v", E.ErrRequestDataInvalidMsg, e)
 
-        helper.APIErrorResponse(c, http.StatusBadRequest, err)
+        helper.APIErrorResponse(c, http.StatusBadRequest, e)
         return
     }
 
@@ -137,9 +139,9 @@ func (h *userHandler) Update(c *gin.Context) {
     dtoResponse, err := h.service.Update(uname, userReq)
     if err != nil {
         // saving error 'updating user data' to logfile
-        log.Println(err)
-        logger.Errorf("error updating data: %v", err)
-        helper.APIErrorResponse(c, http.StatusBadRequest, err)
+        e := E.New(E.ErrUpdateDataFail, err)
+        logger.Errorf("update user. %s: %v", E.ErrUpdateDataFailMsg, e)
+        helper.APIErrorResponse(c, http.StatusBadRequest, e)
         return
     }
 
