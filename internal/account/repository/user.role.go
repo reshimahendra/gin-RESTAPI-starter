@@ -5,7 +5,7 @@ package repository
 
 import (
 	"github.com/reshimahendra/gin-starter/internal/account/model"
-	dbErr "github.com/reshimahendra/gin-starter/internal/database/error"
+	E "github.com/reshimahendra/gin-starter/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -67,16 +67,12 @@ func (r *userRoleRepository) Update(id uint, input model.Role) (role *model.Role
 
     // no data updated applied, send error response to notify client
     if result.RowsAffected == 0 {
-        err = dbErr.New(dbErr.ErrUpdateDataFail, nil)
+        err = E.NewSimpleError(E.ErrUpdateDataFail)
         return nil, err
     }
 
     input.ID = id
     role = &input
-    // err = r.db.Where("id = ?", id).First(&role).Error
-    // if err != nil {
-    //     return nil, err
-    // }
 
     return
 }

@@ -1,5 +1,5 @@
 /*
-   Authentication Handler
+   Package handler for Authentication
    Including:
    * Signup
    * Signin
@@ -10,7 +10,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -19,8 +18,8 @@ import (
 	"github.com/reshimahendra/gin-starter/internal/account/service"
 	"github.com/reshimahendra/gin-starter/internal/pkg/auth"
 	"github.com/reshimahendra/gin-starter/internal/pkg/helper"
+	E "github.com/reshimahendra/gin-starter/pkg/errors"
 	"github.com/reshimahendra/gin-starter/pkg/logger"
-	"gorm.io/gorm"
 )
 
 /**
@@ -40,118 +39,101 @@ import (
   http://127.0.0.1:8000/auth/check
 */
 
-const (
-    userSigninErr  = "User email and password does not match or not exist."
-    tokenInvalid   = "Token is already expired or not valid."
-    tokenNotFound  = "Token could not found!"
-    tokenCreateErr = "Could not create token!"
-)
-
-type Controller struct {
-    db *gorm.DB
-}
-
 // Signup controller
-func (ctl *Controller) Signup(c *gin.Context) {    
-    var u service.UserRequest
+func (h *userHandler) Signup(c *gin.Context) {    
+    var userRequest service.UserRequest
 
-    err := c.ShouldBindJSON(&u)
+    err := c.ShouldBindJSON(&userRequest)
     if err != nil {
-        logger.Errorf("Error signup: %v", err)
-        c.AbortWithStatusJSON(400, gin.H{"error":"Bad request"})
-    }
+        e := E.New(E.ErrRequestDataInvalid, err)
+        logger.Errorf("%s. %v", E.ErrSignUpMsg, err)
+        helper.APIErrorResponse(c, http.StatusBadRequest, e)
 
-    fmt.Println(u)
-
-
-    // Signup controller logic here
-    isUserExist := service.IsUserExist(ctl.db, u.Email, u.Username)
-    fmt.Println(isUserExist)
-    if isUserExist {
-        logger.Errorf("User already exist. Signup aborted.")
-        c.AbortWithStatus(400)
-    }
-
-    // Generate hash password for the new user
-    u.Password, err = helper.HashPassword(u.Password)
-    if err != nil {
-        logger.Errorf("Cannot create hash password on signup: %v", err)
-        c.AbortWithStatusJSON(400, gin.H{"error":"Cannot create hash password"})
         return
     }
 
-    // convert 'dto User request' to 'model User'
-    responseUser := service.RequestToUser(u)
+    // Signup controller logic here
+    isAccountAvailable := h.service.UserAvailable(userRequest.Email, userRequest.Username)
+    if !isAccountAvailable {
+        err := E.NewSimpleError(E.ErrUserAlreadyRegistered)
+        logger.Errorf("%s. %v", E.ErrSignUpMsg, err)
+        helper.APIErrorResponse(c, http.StatusBadRequest, err)
 
-    user, err := service.SaveUser(ctl.db, *responseUser)
+        return
+    }
+
+    // create user account. exit if error
+    userResponse, err := h.service.Create(userRequest)
     if err != nil {
-        logger.Errorf("Error signup: %v", err)
-        c.AbortWithStatusJSON(400, gin.H{"error":"Signup error"})
+        logger.Errorf("%s. %v", E.ErrSignUpMsg, err)
+        helper.APIErrorResponse(c, http.StatusInternalServerError, err)
+
         return
     }
 
     // TODO: send mail to user based on their email address to activate the account
     // OR create 'Hook' on table 'User' AfterCreate to execute the operation
 
-    c.JSON(200, user)
+    helper.APIResponse(c, http.StatusOK, "successful signup", userResponse)
 }
 
 // Signin controller
-func (ctl *Controller) Signin(c *gin.Context) {
+func (h *userHandler) Signin(c *gin.Context) {
+    // get login data from context
     var credential auth.AuthLoginDTO
     err := c.ShouldBindJSON(&credential)
     if err != nil {
-        c.JSON(
-            http.StatusUnauthorized,
-            gin.H{
-                "code"    : http.StatusUnauthorized,
-                "message" : tokenNotFound,
-            },
-        )
+        e := E.New(E.ErrRequestDataInvalid, err)
+        logger.Errorf("%s: %v", E.ErrRequestDataInvalidMsg, err)
+        helper.APIErrorResponse(c, http.StatusUnauthorized, e)
+
         return
     }
 
     // User is registered 
-    isActive, isPasswordMatch := service.CredentialByEmail(ctl.db, credential.Email, credential.Password)
+    isActive, isValid := h.service.CheckCredentialByMail(credential.Email, credential.Password)
 
-    // User not found
-    if !isPasswordMatch {
-        c.AbortWithStatus(400)
+    // user / password not valid, exit the process
+    if !isValid {
+        err := E.NewSimpleError(E.ErrPasswordNotMatch)
+        logger.Errorf("login fail: %v", err)
+        helper.APIErrorResponse(c, http.StatusUnauthorized, err)
+
+        return
     }
 
     // User not active 
     if !isActive {
-        c.JSON(403, gin.H{
-            "error": "User not active.",
-        })
+        err := E.NewSimpleError(E.ErrUserNotActive)
+        logger.Errorf("login fail: %v", err)
+        helper.APIErrorResponse(c, http.StatusUnauthorized, err)
+
         return
     }
 
-    if isActive && isPasswordMatch {
+    if isActive && isValid {
         token, err := auth.CreateToken(credential.Email)
         if err != nil {
-            c.AbortWithStatusJSON(http.StatusInternalServerError, tokenCreateErr)
+            e := E.New(E.ErrTokenCreate, err)
+            logger.Errorf("%s: %v", E.ErrTokenCreateMsg, e)
+            helper.APIErrorResponse(c, http.StatusInternalServerError, e)
+
             return
         }
 
+        // send token data response to the client
         authLoginResponse := auth.AuthLoginResponse{
             AccessToken     : token.AccessToken,
             RefreshToken    : token.RefreshToken,
             TransmissionKey : token.TransmissionKey,
         }
 
-        c.JSON(http.StatusOK, authLoginResponse)
-    } else {
-        c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-            "code"    : http.StatusUnauthorized,
-            "message" : userSigninErr,
-            "token"   : nil,
-        })
+        helper.APIResponse(c, http.StatusOK, "successful signin", authLoginResponse)
     }
 }
 
 // Refresh Token
-func (ctl *Controller) RefreshToken(c *gin.Context) {
+func (h *userHandler) RefreshToken(c *gin.Context) {
     mapToken := map[string]string{}
 
     decoder := json.NewDecoder(c.Request.Body)
@@ -165,7 +147,10 @@ func (ctl *Controller) RefreshToken(c *gin.Context) {
 
     token, err := auth.TokenValid(mapToken["refresh_token"])
     if err != nil {
-        c.AbortWithStatusJSON(http.StatusUnauthorized, tokenInvalid)
+        e := E.New(E.ErrTokenRefresh, err)
+        logger.Errorf("%s: %v", E.ErrTokenRefreshMsg, err)
+        helper.APIErrorResponse(c, http.StatusUnauthorized, e)
+
         return
     }
 
@@ -174,21 +159,30 @@ func (ctl *Controller) RefreshToken(c *gin.Context) {
     // Create new token 
     newToken, err := auth.CreateToken(email)
     if err != nil {
-        c.JSON(http.StatusInternalServerError, tokenCreateErr)
+        e := E.New(E.ErrTokenCreate, err)
+        logger.Errorf("%s: %v", E.ErrTokenCreateMsg, err)
+        helper.APIErrorResponse(c, http.StatusInternalServerError, e)
+
         return
     }
 
+    // send RefreshToken data response to the client
     authLoginResponse := auth.AuthLoginResponse{
         AccessToken : newToken.AccessToken,
         RefreshToken : newToken.RefreshToken,
         TransmissionKey : newToken.TransmissionKey,
     }
 
-    c.JSON(http.StatusOK, authLoginResponse)
+    helper.APIResponse(
+        c,
+        http.StatusOK,
+        "successful refreshing token data",
+        authLoginResponse,
+    )
 }
 
 // Check token
-func (ctl *Controller) CheckToken(c *gin.Context) {
+func (h *userHandler) CheckToken(c *gin.Context) {
     var decToken string
     bearerToken := c.GetHeader("Authorization")
     authArray := strings.Split(bearerToken, " ")
@@ -197,19 +191,28 @@ func (ctl *Controller) CheckToken(c *gin.Context) {
     }
 
     if decToken == "" {
-        c.AbortWithStatusJSON(http.StatusUnauthorized, tokenNotFound)
+        err := E.NewSimpleError(E.ErrTokenNotFound)
+        logger.Errorf("error check token: %v", err)
+        helper.APIErrorResponse(c, http.StatusUnauthorized, err)
+
         return
     }
 
     token, err := auth.TokenValid(decToken)
     if err != nil {
-        c.AbortWithStatusJSON(http.StatusUnauthorized, tokenInvalid)
+        e := E.New(E.ErrTokenInvalid, err)
+        logger.Errorf("%s: %v", E.ErrTokenInvalidMsg, e)
+        helper.APIErrorResponse(c, http.StatusUnauthorized, e)
+
         return
     }
 
+    // send response of the 'checkToken' result to client
     email := token.Claims.(jwt.MapClaims)["email"].(string)
-    // claims := token.Claims.(*jwt.MapClaims)
-    // email := claims["email"]
-
-    c.JSON(http.StatusOK, email)
+    helper.APIResponse(
+        c,
+        http.StatusOK,
+        "successful check token",
+        email,
+    )
 }

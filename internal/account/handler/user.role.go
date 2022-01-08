@@ -9,8 +9,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/reshimahendra/gin-starter/internal/account/service"
-	dbErr "github.com/reshimahendra/gin-starter/internal/database/error"
 	"github.com/reshimahendra/gin-starter/internal/pkg/helper"
+	E "github.com/reshimahendra/gin-starter/pkg/errors"
 	"github.com/reshimahendra/gin-starter/pkg/logger"
 )
 
@@ -34,9 +34,9 @@ func (h *userRoleHandler) Get(c *gin.Context) {
     // if param id not found, response with error data and exit process
     roleID, err := strconv.Atoi(id)
     if err != nil {
-        err := dbErr.New(dbErr.ErrParamIDEmpty, nil)
-        logger.Errorf("param id not valid: %v", err)
-        helper.APIErrorResponse(c, http.StatusBadRequest, err)
+        e := E.New(E.ErrParamIsInvalid, err)
+        logger.Errorf("get user role. %s: %v", E.ErrParamIsEmptyMsg, e)
+        helper.APIErrorResponse(c, http.StatusBadRequest, e)
         return
 
     }
@@ -44,8 +44,9 @@ func (h *userRoleHandler) Get(c *gin.Context) {
     // send request to get data 'user role' from the service module
     roleResponse, err := h.service.Get(uint(roleID))
     if err != nil {
-        logger.Errorf("error retreiving user role data: %v", err)
-        helper.APIErrorResponse(c, http.StatusBadRequest, err)
+        e := E.New(E.ErrGettingData, err)
+        logger.Errorf("get user role. %s: %v", E.ErrGettingDataMsg, e)
+        helper.APIErrorResponse(c, http.StatusBadRequest, e)
         return
     }
 
@@ -53,7 +54,7 @@ func (h *userRoleHandler) Get(c *gin.Context) {
     helper.APIResponse(
         c,
         http.StatusOK,
-        "succesfull retreiving "+roleResponse.Name+" role data.",
+        "successful retreiving "+roleResponse.Name+" role data.",
         roleResponse,
     )
 }
@@ -63,8 +64,9 @@ func (h *userRoleHandler) Gets(c *gin.Context) {
     // get all user role data response
     rolesResponse, err := h.service.Gets()
     if err != nil {
-        logger.Errorf("error retreiving user role data: %v", err)
-        helper.APIErrorResponse(c, http.StatusInternalServerError, err)
+        e := E.New(E.ErrGettingData, err)
+        logger.Errorf("gets user role. %s: %v", E.ErrGettingDataMsg, e)
+        helper.APIErrorResponse(c, http.StatusInternalServerError, e)
         return
     }
 
@@ -72,7 +74,7 @@ func (h *userRoleHandler) Gets(c *gin.Context) {
     helper.APIResponse(
         c,
         http.StatusOK,
-        "succesfull retreiving user roles data.",
+        "successful retreiving user roles data.",
         rolesResponse,
     )
 }
@@ -85,16 +87,18 @@ func (h *userRoleHandler) Create(c *gin.Context) {
 
     // check for data binding error. if found, exit process
     if err != nil {
-        logger.Errorf("error on binding user role data: %v", err)
-        helper.APIErrorResponse(c, http.StatusBadRequest, err)
+        e := E.New(E.ErrRequestDataInvalid, err)
+        logger.Errorf("create user role. %s: %v", E.ErrRequestDataInvalidMsg, e)
+        helper.APIErrorResponse(c, http.StatusBadRequest, e)
         return
     }
 
     // send request to the 'service' module to save the binded data (roleRequestDto)
     roleResponseDto, err := h.service.Create(roleRequestDto)
     if err != nil {
-        logger.Errorf("error creating user role data: %v", err)
-        helper.APIErrorResponse(c, http.StatusBadRequest, err)
+        e := E.New(E.ErrSaveDataFail, err)
+        logger.Errorf("create user role. %s: %v", E.ErrSaveDataFailMsg, e)
+        helper.APIErrorResponse(c, http.StatusBadRequest, e)
         return
     }
 
@@ -102,7 +106,7 @@ func (h *userRoleHandler) Create(c *gin.Context) {
     helper.APIResponse(
         c,
         http.StatusOK,
-        "seccesfull creating "+ roleResponseDto.Name+" role.",
+        "seccessful creating "+ roleResponseDto.Name+" role.",
         roleResponseDto,
     )
 }
@@ -114,9 +118,9 @@ func (h *userRoleHandler) Update(c *gin.Context) {
     // if param id not found, response with error data and exit process
     roleID, err := strconv.Atoi(id)
     if err != nil  {
-        err := dbErr.New(dbErr.ErrParamIDEmpty, nil)
-        logger.Errorf("param id not valid: %v", err)
-        helper.APIErrorResponse(c, http.StatusBadRequest, err)
+        e := E.New(E.ErrParamIsInvalid, err)
+        logger.Errorf("update user role. %s: %v", E.ErrParamIsInvalidMsg, e)
+        helper.APIErrorResponse(c, http.StatusBadRequest, e)
         return
     }
 
@@ -126,16 +130,18 @@ func (h *userRoleHandler) Update(c *gin.Context) {
 
     // check for data binding error. if found, exit process
     if err != nil {
-        logger.Errorf("error on binding user role data: %v", err)
-        helper.APIErrorResponse(c, http.StatusBadRequest, err)
+        e := E.New(E.ErrRequestDataInvalid, err)
+        logger.Errorf("update user role. %s: %v", E.ErrRequestDataInvalidMsg, e)
+        helper.APIErrorResponse(c, http.StatusBadRequest, e)
         return
     }
 
     // send request to the 'service' module to update the binded data (roleRequestDto)
     roleResponseDto, err := h.service.Update(uint(roleID), roleRequestDto)
     if err != nil {
-        logger.Errorf("error updating user role data: %v", err)
-        helper.APIErrorResponse(c, http.StatusBadRequest, err)
+        e := E.New(E.ErrUpdateDataFail, err)
+        logger.Errorf("update user role. %s: %v", E.ErrUpdateDataFailMsg, e)
+        helper.APIErrorResponse(c, http.StatusBadRequest, e)
         return
     }
 
