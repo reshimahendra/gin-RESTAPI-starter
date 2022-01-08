@@ -6,6 +6,7 @@ database:
     host     : "localhost"
     port     : "5432"
     logmode  : true
+    logmode  : true
 
 server:
     # host                       : "yourdomain.com"  // uncomment if you domain is not localhost
@@ -14,3 +15,11 @@ server:
     accessTokenExpireDuration  : 1
     refreshTokenExpireDuration : 1
     limitCountPerRequest       : 1
+    # ["production", "development"]
+    mode                       : "development"
+    welcomeMessage             : true
+
+logger:
+    database_log_name : ".database.log"
+    server_log_name   : ".server.log"
+    access_log_name   : ".access.log"
