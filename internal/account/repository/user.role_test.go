@@ -187,11 +187,7 @@ func (s *Suite) TestUserRoleRepositoryCreate() {
         //      WillReturnResult(sqlmock.NewResult(int64(tr[0].ID), 1))
         // s.mock.ExpectCommit()
 
-        got, err := s.repository.Create(model.Role{
-            ID: uint(1),
-            Name: "Pletan",
-            Description: "Deskripsi pletan",
-        })
+        got, err := s.repository.Create(tr[0])
         // assert.NoError(s.T(), err)
         //
         t.Logf("got: %v,\nError: %v", got, err)
