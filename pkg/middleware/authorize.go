@@ -9,11 +9,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/reshimahendra/gin-starter/internal/pkg/auth"
-)
-
-const (
-    tokenInvalid   = "Token is already expired or not valid."
-    tokenNotFound  = "Token could not found!"
+	"github.com/reshimahendra/gin-starter/internal/pkg/helper"
+	E "github.com/reshimahendra/gin-starter/pkg/errors"
 )
 
 // Authorize is middleware to prevent unauthorized access
@@ -27,25 +24,19 @@ func Authorize() gin.HandlerFunc {
 		}
 
 		if tokenStr == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, tokenNotFound)
+            e := E.NewSimpleError(E.ErrTokenNotFound)
+            helper.APIErrorResponse(c, http.StatusUnauthorized, e)
 			return
 		}
 
 		token, err := auth.TokenValid(tokenStr)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, tokenInvalid)
+            helper.APIErrorResponse(c, http.StatusUnauthorized, err)
 			return
 		}
 
 		if err != nil && !token.Valid {
-		//     claims := token.Claims.(jwt.MapClaims)
-		//     fmt.Println(claims)
-		// } else {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"code"    : http.StatusUnauthorized,
-				"message" : tokenInvalid,
-				"token"   : nil,
-			})
+            helper.APIErrorResponse(c, http.StatusUnauthorized, err)
 		}
 
 	}

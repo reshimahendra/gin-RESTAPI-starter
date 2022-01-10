@@ -26,7 +26,7 @@ func Setup() error {
     var config *Configuration
 
     // Place the config file at root folder with name '.config.yaml'
-    viper.SetConfigName(".config")
+    viper.SetConfigName("./config/.config")
     viper.SetConfigType("yaml")
     viper.AddConfigPath(".")
 

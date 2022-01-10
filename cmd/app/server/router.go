@@ -40,7 +40,7 @@ func Router(db *gorm.DB) *gin.Engine {
     // Enable the server access log
     accessLog := viper.GetString("logger.access_log_name")
     if accessLog != "" {
-        accessLog = ".access.log"
+        accessLog = "./log/.access.log"
     }
 
     // Preparing up our access log
