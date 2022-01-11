@@ -58,7 +58,7 @@ func (r *userRoleRepository) Create(input model.Role) (role *model.Role, err err
 
 // Update will update 'Role' data based on param 'id' and 'input request'
 func (r *userRoleRepository) Update(id uint, input model.Role) (role *model.Role, err error) {
-    result := r.db.Where("id = ?", id).Omit("id").Updates(&input)
+    result := r.db.Where("\"id\" = ?", id).Updates(&input)
     err = result.Error
 
     if err != nil {
