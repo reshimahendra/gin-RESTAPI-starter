@@ -95,7 +95,7 @@ func (h *userHandler) Signin(c *gin.Context) {
 
     // user / password not valid, exit the process
     if !isValid {
-        err := E.NewSimpleError(E.ErrPasswordNotMatch)
+        err := E.NewSimpleError(E.ErrSignIn)
         logger.Errorf("login fail: %v", err)
         helper.APIErrorResponse(c, http.StatusUnauthorized, err)
 
@@ -138,8 +138,8 @@ func (h *userHandler) RefreshToken(c *gin.Context) {
 
     decoder := json.NewDecoder(c.Request.Body)
     if err := decoder.Decode(&mapToken); err != nil {
-        errs := []string{"REFRESH_TOKEN_ERROR"}
-        c.JSON(http.StatusUnprocessableEntity, errs)
+        e := E.New(E.ErrTokenRefresh, err)
+        helper.APIErrorResponse(c, http.StatusUnprocessableEntity, e)
         return
     }
 

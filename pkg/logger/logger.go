@@ -1,6 +1,6 @@
 /*
-    Logger module
-    - It will create logfile for the server
+   Logger module
+   - It will create logfile for the server
 */
 package logger
 
@@ -13,13 +13,18 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 var logger = logrus.New()
 
 // init will Initialize the logger setting
 func init() {
-	logger.Out = getWriter()
+    logFile := viper.GetString("logger.server_log_name")
+    if logFile == "" {
+        logFile = "./log/.server.log"
+    }
+	logger.Out = getWriter(logFile)
 	logger.Level = logrus.InfoLevel
 	logger.Formatter = &formatter{}
 
@@ -74,8 +79,8 @@ func Fatalf(format string, args ...interface{}) {
 }
 
 // getWriter will get the logfile as the output of our logger
-func getWriter() io.Writer {
-	file, err := os.OpenFile(".server.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+func getWriter(filepath string) io.Writer {
+	file, err := os.OpenFile(filepath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		logger.Errorf("Failed to create server log file: %v", err)
 		return os.Stdout

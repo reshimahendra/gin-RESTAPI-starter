@@ -54,27 +54,29 @@ func (u *user) Run() {
     // Protected area for AUTH endpoint
     rAuth.Use(middleware.Authorize())
     {
-        rAuth.POST("/refresh-token", apiUser.RefreshToken)
-        rAuth.POST("/check-token", apiUser.CheckToken)
+        rAuth.POST("/refresh", apiUser.RefreshToken)
+        rAuth.POST("/check", apiUser.CheckToken)
     }
 
     // Group for 'User' module
-    r := u.router.Group("/user")
+    r := u.router.Group("/dashboard/user")
+    r.Use(middleware.Authorize())
+    {
+        // user api endpoint
+        r.GET("/username/:user", apiUser.Get)
+        r.GET("/email/:email", apiUser.GetByEmail)
+        r.GET("/", apiUser.Gets)
+        r.PUT("/:username", apiUser.Update)
+        r.POST("/", apiUser.Create)
+        
+        // Create group router for 'Role' under 'User' group router
+        uRole := r.Group("/role")
+        uRole.GET("/:id", apiUserRole.Get)
+        uRole.GET("/", apiUserRole.Gets)
+        uRole.PUT("/:id", apiUserRole.Update)
+        uRole.POST("/", apiUserRole.Create)
+    }
 
-    // Non Protected area
-    r.GET("/username/:user", apiUser.Get)
-    r.GET("/email/:email", apiUser.GetByEmail)
-    r.GET("/", apiUser.Gets)
-    r.PUT("/:username", apiUser.Update)
-    r.POST("/", apiUser.Create)
-    
-    // Protected area
-    // Create group router for 'Role' under 'User' group router
-    uRole := r.Group("/role")
-    uRole.GET("/:id", apiUserRole.Get)
-    uRole.GET("/", apiUserRole.Gets)
-    uRole.PUT("/:id", apiUserRole.Update)
-    uRole.POST("/", apiUserRole.Create)
 }
 
 

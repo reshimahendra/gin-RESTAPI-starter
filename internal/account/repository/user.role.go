@@ -5,7 +5,7 @@ package repository
 
 import (
 	"github.com/reshimahendra/gin-starter/internal/account/model"
-	E "github.com/reshimahendra/gin-starter/pkg/errors"
+    E "github.com/reshimahendra/gin-starter/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -23,13 +23,13 @@ type userRoleRepository struct {
 }
 
 // New will create new connection to the database for our main repository  
-func NewUserRole(db *gorm.DB) *userRoleRepository {
+func NewUserRole(db *gorm.DB) *userRoleRepository{
     return &userRoleRepository{db: db}
 }
 
 // Get will get 'Role' data based on given param 'id'
 func (r *userRoleRepository) Get(id uint) (role *model.Role, err error) {
-    err = r.db.Where("id", id).First(&role).Error
+    err = r.db.Where("id = ?", id).First(&role).Error
     if err != nil {
         return nil, err
     }
@@ -47,18 +47,18 @@ func (r *userRoleRepository) Gets() (roles *[]model.Role, err error){
 
 // Save will save 'Role' data based on user 'input request'
 func (r *userRoleRepository) Create(input model.Role) (role *model.Role, err error){
-    err = r.db.Create(&input).Error
-    if err != nil {
+    res := r.db.Create(&input)
+    if err = res.Error; err != nil {
         return nil, err
     }
-    role = &input
 
-    return
+    res.Scan(&role)
+    return 
 }
 
 // Update will update 'Role' data based on param 'id' and 'input request'
 func (r *userRoleRepository) Update(id uint, input model.Role) (role *model.Role, err error) {
-    result := r.db.Where("id = ?", id).Updates(&input)
+    result := r.db.Where("\"id\" = ?", id).Updates(&input)
     err = result.Error
 
     if err != nil {
@@ -71,8 +71,9 @@ func (r *userRoleRepository) Update(id uint, input model.Role) (role *model.Role
         return nil, err
     }
 
-    input.ID = id
-    role = &input
+    // input.ID = id
+
+    result.Scan(&role)
 
     return
 }

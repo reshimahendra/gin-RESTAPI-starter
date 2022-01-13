@@ -61,7 +61,7 @@ func Setup() error {
     password := viper.GetString("database.password")
     host     := viper.GetString("database.host")
     port     := viper.GetString("database.port")
-    sslmode  := viper.GetBool("database.sslmode")
+    // sslmode  := viper.GetBool("database.sslmode")
     logmode  := viper.GetBool("database.logmode")
 
 
@@ -84,8 +84,8 @@ func Setup() error {
     switch driver {
     case "postgres":
         conn := fmt.Sprintf(
-            "host=%s port=%s user=%s password=%s dbname=%s sslmode=%t",
-            host, port, username, password, dbname, sslmode,
+            "host=%s port=%s user=%s password=%s dbname=%s", // sslmode=%t",
+            host, port, username, password, dbname, // sslmode,
         )
         database, err = gorm.Open(postgres.Open(conn), &gorm.Config{Logger: DBLogger})
     case "mysql":
