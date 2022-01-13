@@ -10,6 +10,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/reshimahendra/gin-starter/internal/pkg/helper"
 	"github.com/reshimahendra/gin-starter/internal/config"
+	E "github.com/reshimahendra/gin-starter/pkg/errors"
 )
 
 // AuthLoginDTO is 'DTO' (Data Transfer Object) to verify user on login 
@@ -96,7 +97,8 @@ func verifyToken(token string) (*jwt.Token, error) {
     })
 
     if err != nil {
-        return verifiedToken, fmt.Errorf("Unauthorized access")
+        e := E.NewSimpleError(E.ErrTokenInvalid)
+        return verifiedToken, e 
     }
 
     return verifiedToken, nil
@@ -104,16 +106,20 @@ func verifyToken(token string) (*jwt.Token, error) {
 
 // TokenValid will check whether the 'given' token was valid or not
 func TokenValid(bearerToken string) (*jwt.Token, error) {
+    // new invalid token error
+    e := E.NewSimpleError(E.ErrTokenInvalid)
+    
+    // check token validity
     token, err := verifyToken(bearerToken)
     if err != nil {
         if token != nil {
-            return token, err
+            return token, e
         }
-        return nil, err
+        return nil, e
     }
 
     if !token.Valid {
-        return nil, fmt.Errorf("Unauthorized access")
+        return nil, e
     }
 
     return token, nil

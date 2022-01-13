@@ -37,6 +37,7 @@ func Authorize() gin.HandlerFunc {
 
 		if err != nil && !token.Valid {
             helper.APIErrorResponse(c, http.StatusUnauthorized, err)
+            return
 		}
 
 	}

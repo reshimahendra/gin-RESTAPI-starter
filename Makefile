@@ -3,7 +3,7 @@ info:
 run:
 	go run cmd/app/main.go
 build:
-	go run --output dist/server -ldflags '-s -w' cmd/app/main.go
+	go build -o ./dist/server -ldflags '-s -w' cmd/app/main.go
 pq-start:
 	# starting postgresql service (if not started)
 	sudo systemctl start postgresql
